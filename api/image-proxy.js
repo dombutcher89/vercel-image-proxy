@@ -1,23 +1,18 @@
 export default async function handler(req, res) {
-  let imageUrl = req.query.img;
+  const fullParam = req.url?.split('full=')[1];
 
-  if (!imageUrl) {
-    return res.status(400).send("Missing 'img' query parameter");
+  if (!fullParam) {
+    return res.status(400).send("Missing 'full' parameter");
   }
 
-  // Fix double-encoding if it's already encoded
   try {
-    imageUrl = decodeURIComponent(imageUrl);
-  } catch (_) {
-    // It's okay if decoding fails
-  }
+    // Decode in case FestivalPro sends some parts already encoded
+    const rawImageUrl = decodeURIComponent(fullParam);
+    const imageUrl = rawImageUrl.startsWith('http')
+      ? rawImageUrl
+      : 'https://' + rawImageUrl;
 
-  // Now re-encode safely for use in fetch
-  try {
-    const fetchUrl = new URL(imageUrl);
-    const encodedUrl = fetchUrl.href;
-
-    const response = await fetch(encodedUrl, {
+    const response = await fetch(imageUrl, {
       headers: { 'User-Agent': 'Mozilla/5.0' }
     });
 
