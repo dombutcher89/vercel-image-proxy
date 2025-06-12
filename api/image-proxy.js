@@ -15,31 +15,30 @@ export default async function handler(req, res) {
 
     const response = await fetch(imageUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Accept': '*/*'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+        'Referer': 'https://newwineunited.festivalpro.com',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Cache-Control': 'no-cache'
       }
     });
-
-    if (!response.ok) {
-      return res.status(502).send("Failed to fetch image.");
-    }
 
     const contentType = response.headers.get("content-type") || 'application/octet-stream';
     const buffer = await response.arrayBuffer();
 
-    // DEBUG RESPONSE INFO
-    console.log("📦 Image fetched from:", imageUrl);
-    console.log("📎 Content-Type:", contentType);
-    console.log("📏 Buffer size:", buffer.byteLength);
-    console.log("🔍 First 16 bytes:", Buffer.from(buffer).toString('hex', 0, 16));
+    // Debug response
+    console.log("📦 Image fetched:", imageUrl);
+    console.log("📎 Type:", contentType);
+    console.log("📏 Size:", buffer.byteLength);
 
-    // Show the raw response info (for now only)
-    res.setHeader("Content-Type", "text/plain");
-    res.status(200).send(`
-      Content-Type: ${contentType}
-      Byte Length: ${buffer.byteLength}
-      First 16 bytes (hex): ${Buffer.from(buffer).toString('hex', 0, 16)}
-    `);
+    if (buffer.byteLength < 10) {
+      res.setHeader("Content-Type", "text/plain");
+      return res.status(200).send("⛔ FestivalPro likely blocked the request (empty response).");
+    }
+
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.status(200).send(Buffer.from(buffer));
   } catch (error) {
     res.status(500).send("Proxy error: " + error.message);
   }
