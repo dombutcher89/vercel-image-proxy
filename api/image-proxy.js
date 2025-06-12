@@ -1,15 +1,13 @@
 export default async function handler(req, res) {
-  const fullParam = req.url?.split('full=')[1];
-
-  if (!fullParam) {
-    return res.status(400).send("Missing 'full' parameter");
-  }
-
   try {
-    const rawImageUrl = decodeURIComponent(fullParam);
-    const imageUrl = rawImageUrl.startsWith('http')
-      ? rawImageUrl
-      : 'https://' + rawImageUrl;
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const fullParam = url.searchParams.get("full");
+
+    if (!fullParam) {
+      return res.status(400).send("Missing 'full' parameter");
+    }
+
+    const imageUrl = decodeURIComponent(fullParam);
 
     const response = await fetch(imageUrl, {
       headers: { 'User-Agent': 'Mozilla/5.0' }
