@@ -1,15 +1,12 @@
 export default async function handler(req, res) {
   try {
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    const fullParam = url.searchParams.get("full");
+    const { pathname } = new URL(req.url, `http://${req.headers.host}`);
 
-    if (!fullParam) {
-      return res.status(400).send("Missing 'full' parameter");
-    }
+    // Remove leading slash from path
+    const raw = pathname.replace('/api/image-proxy/', '');
+    const decodedUrl = decodeURIComponent(raw);
 
-    const imageUrl = decodeURIComponent(fullParam);
-
-    const response = await fetch(imageUrl, {
+    const response = await fetch(decodedUrl, {
       headers: { 'User-Agent': 'Mozilla/5.0' }
     });
 
@@ -23,7 +20,7 @@ export default async function handler(req, res) {
     res.setHeader("Content-Type", contentType);
     res.setHeader("Cache-Control", "public, max-age=3600");
     res.status(200).send(Buffer.from(buffer));
-  } catch (error) {
-    res.status(500).send("Error: " + error.message);
+  } catch (err) {
+    res.status(500).send("Error: " + err.message);
   }
 }
