@@ -1,23 +1,20 @@
 export default async function handler(req, res) {
   try {
-    // Get the full request path after /api/image-proxy/
-    const rawPath = req.url.split('/api/image-proxy/')[1];
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const fullParam = url.searchParams.get("full");
 
-    if (!rawPath) {
-      return res.status(400).send("Missing image URL path.");
+    if (!fullParam) {
+      return res.status(400).send("Missing 'full' parameter");
     }
 
-    // Include query string if present
-    const fullUrl = decodeURIComponent(
-      rawPath + (req.url.includes('?') ? '?' + req.url.split('?')[1] : '')
-    );
+    const imageUrl = decodeURIComponent(fullParam);
 
-    // Must start with http/https
-    if (!/^https?:\/\//.test(fullUrl)) {
-      return res.status(400).send("Invalid image URL.");
+    // Ensure it's an http or https URL
+    if (!/^https?:\/\//.test(imageUrl)) {
+      return res.status(400).send("Invalid URL format.");
     }
 
-    const response = await fetch(fullUrl, {
+    const response = await fetch(imageUrl, {
       headers: { 'User-Agent': 'Mozilla/5.0' }
     });
 
@@ -31,7 +28,7 @@ export default async function handler(req, res) {
     res.setHeader("Content-Type", contentType);
     res.setHeader("Cache-Control", "public, max-age=3600");
     res.status(200).send(Buffer.from(buffer));
-  } catch (err) {
-    res.status(500).send("Proxy error: " + err.message);
+  } catch (error) {
+    res.status(500).send("Proxy error: " + error.message);
   }
 }
