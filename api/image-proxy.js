@@ -6,7 +6,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Decode in case FestivalPro sends some parts already encoded
     const rawImageUrl = decodeURIComponent(fullParam);
     const imageUrl = rawImageUrl.startsWith('http')
       ? rawImageUrl
