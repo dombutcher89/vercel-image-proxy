@@ -9,20 +9,29 @@ export default async function handler(req, res) {
 
     const imageUrl = decodeURIComponent(fullParam);
 
-    // Ensure it's an http or https URL
     if (!/^https?:\/\//.test(imageUrl)) {
       return res.status(400).send("Invalid URL format.");
     }
 
     const response = await fetch(imageUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0' }
+      headers: {
+        'User-Agent': 'Mozilla/5.0', // spoof browser
+        'Accept': '*/*'
+      }
     });
 
     if (!response.ok) {
       return res.status(502).send("Failed to fetch image.");
     }
 
-    const contentType = response.headers.get("content-type") || "application/octet-stream";
+    // Try to infer content type
+    let contentType = response.headers.get("content-type");
+
+    // Fallback if FestivalPro doesn't return one
+    if (!contentType || contentType === 'application/octet-stream') {
+      contentType = 'image/jpeg'; // most likely
+    }
+
     const buffer = await response.arrayBuffer();
 
     res.setHeader("Content-Type", contentType);
