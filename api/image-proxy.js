@@ -1,10 +1,23 @@
 export default async function handler(req, res) {
-  const imageUrl = req.query.img;
+  let imageUrl = req.query.img;
+
   if (!imageUrl) {
     return res.status(400).send("Missing 'img' query parameter");
   }
+
+  // Fix double-encoding if it's already encoded
   try {
-    const response = await fetch(imageUrl, {
+    imageUrl = decodeURIComponent(imageUrl);
+  } catch (_) {
+    // It's okay if decoding fails
+  }
+
+  // Now re-encode safely for use in fetch
+  try {
+    const fetchUrl = new URL(imageUrl);
+    const encodedUrl = fetchUrl.href;
+
+    const response = await fetch(encodedUrl, {
       headers: { 'User-Agent': 'Mozilla/5.0' }
     });
 
