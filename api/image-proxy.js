@@ -15,7 +15,7 @@ export default async function handler(req, res) {
 
     const response = await fetch(imageUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0', // spoof browser
+        'User-Agent': 'Mozilla/5.0',
         'Accept': '*/*'
       }
     });
@@ -24,19 +24,22 @@ export default async function handler(req, res) {
       return res.status(502).send("Failed to fetch image.");
     }
 
-    // Try to infer content type
-    let contentType = response.headers.get("content-type");
-
-    // Fallback if FestivalPro doesn't return one
-    if (!contentType || contentType === 'application/octet-stream') {
-      contentType = 'image/jpeg'; // most likely
-    }
-
+    const contentType = response.headers.get("content-type") || 'application/octet-stream';
     const buffer = await response.arrayBuffer();
 
-    res.setHeader("Content-Type", contentType);
-    res.setHeader("Cache-Control", "public, max-age=3600");
-    res.status(200).send(Buffer.from(buffer));
+    // DEBUG RESPONSE INFO
+    console.log("📦 Image fetched from:", imageUrl);
+    console.log("📎 Content-Type:", contentType);
+    console.log("📏 Buffer size:", buffer.byteLength);
+    console.log("🔍 First 16 bytes:", Buffer.from(buffer).toString('hex', 0, 16));
+
+    // Show the raw response info (for now only)
+    res.setHeader("Content-Type", "text/plain");
+    res.status(200).send(`
+      Content-Type: ${contentType}
+      Byte Length: ${buffer.byteLength}
+      First 16 bytes (hex): ${Buffer.from(buffer).toString('hex', 0, 16)}
+    `);
   } catch (error) {
     res.status(500).send("Proxy error: " + error.message);
   }
